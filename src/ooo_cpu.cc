@@ -1,6 +1,8 @@
 #include "ooo_cpu.h"
 #include "set.h"
 
+#define GZ_BUFFER_SIZE 80
+
 // out-of-order core
 O3_CPU ooo_cpu[NUM_CPUS]; 
 uint64_t current_core_cycle[NUM_CPUS], stall_cycle[NUM_CPUS];
@@ -9,6 +11,27 @@ uint32_t SCHEDULING_LATENCY = 0, EXEC_LATENCY = 0, DECODE_LATENCY = 0;
 void O3_CPU::initialize_core()
 {
 
+}
+
+bool O3_CPU::read_next_line_pt(pt_instr &inst) {
+    if (trace_pt_file == NULL) return false;
+    char buffer[GZ_BUFFER_SIZE];
+    if (gzgets(trace_pt_file, buffer, GZ_BUFFER_SIZE) == Z_NULL)
+        return false;
+    vector<uint64_t> curr;
+    char *end;
+    for (auto i = strtoul(buffer, &end, 16); buffer != end; i = strtoul(buffer, &end, 16)) {
+        curr.push_back(i);
+    }
+    if (curr.size() < 3 || curr.size() != curr[1] + 2) {
+        return false;
+    }
+    inst.pc = curr[0];
+    inst.size = curr[1];
+    for (size_t i = 2; i < curr.size(); i++) {
+        inst.inst_bytes[i] = curr[i];
+    }
+    return true;
 }
 
 void O3_CPU::read_from_trace()
@@ -139,6 +162,11 @@ void O3_CPU::read_from_trace()
                 }
                 instr_unique_id++;
             }
+        }
+        else if (pt) {
+            pt_instr trace_read_pt;
+            read_next_line_pt(trace_read_pt);
+
         }
 	else
 	  {

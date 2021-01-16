@@ -11,7 +11,8 @@ uint8_t warmup_complete[NUM_CPUS],
         all_simulation_complete = 0,
         MAX_INSTR_DESTINATIONS = NUM_INSTR_DESTINATIONS,
         knob_cloudsuite = 0,
-        knob_low_bandwidth = 0;
+        knob_low_bandwidth = 0,
+        pt = 0;
 
 uint64_t warmup_instructions     = 1000000,
          simulation_instructions = 10000000,
@@ -522,6 +523,7 @@ int main(int argc, char** argv)
             {"simulation_instructions", required_argument, 0, 'i'},
             {"hide_heartbeat", no_argument, 0, 'h'},
             {"cloudsuite", no_argument, 0, 'c'},
+            {"pt", no_argument, 0, 'p'},
             {"low_bandwidth",  no_argument, 0, 'b'},
             {"traces",  no_argument, 0, 't'},
             {0, 0, 0, 0}      
@@ -550,6 +552,9 @@ int main(int argc, char** argv)
             case 'c':
                 knob_cloudsuite = 1;
                 MAX_INSTR_DESTINATIONS = NUM_INSTR_DESTINATIONS_SPARC;
+                break;
+            case 'p':
+                pt = 1;
                 break;
             case 'b':
                 knob_low_bandwidth = 1;
@@ -663,10 +668,19 @@ int main(int argc, char** argv)
                 j++;
             }
 
-            ooo_cpu[count_traces].trace_file = popen(ooo_cpu[count_traces].gunzip_command, "r");
-            if (ooo_cpu[count_traces].trace_file == NULL) {
-                printf("\n*** Trace file not found: %s ***\n\n", argv[i]);
-                assert(0);
+            if (pt) {
+                ooo_cpu[count_traces].trace_pt_file = gzopen(argv[i], "rb");
+                if (ooo_cpu[count_traces].trace_pt_file == NULL) {
+                    printf("\n*** Trace file not found: %s ***\n\n", argv[i]);
+                    assert(0);
+                }
+            } else {
+                ooo_cpu[count_traces].trace_file = popen(ooo_cpu[count_traces].gunzip_command, "r");
+                if (ooo_cpu[count_traces].trace_file == NULL) {
+                    printf("\n*** Trace file not found: %s ***\n\n", argv[i]);
+                    assert(0);
+                }
+
             }
 
             count_traces++;

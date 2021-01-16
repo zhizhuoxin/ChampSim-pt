@@ -27,6 +27,15 @@
 
 #include "set.h"
 
+class pt_instr {
+public:
+    uint64_t pc = 0;
+    uint8_t size = 0;
+    uint8_t inst_bytes[16] = {0};
+
+    pt_instr() = default;
+};
+
 class input_instr {
   public:
 

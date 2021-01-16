@@ -79,7 +79,8 @@ extern uint8_t warmup_complete[NUM_CPUS],
                all_simulation_complete,
                MAX_INSTR_DESTINATIONS,
                knob_cloudsuite,
-               knob_low_bandwidth;
+               knob_low_bandwidth,
+               pt;
 
 extern uint64_t current_core_cycle[NUM_CPUS], 
                 stall_cycle[NUM_CPUS], 

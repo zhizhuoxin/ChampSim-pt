@@ -2,6 +2,7 @@
 #define OOO_CPU_H
 
 #include "cache.h"
+#include <zlib.h>
 
 #ifdef CRC2_COMPILE
 #define STAT_PRINTING_PERIOD 1000000
@@ -36,6 +37,7 @@ class O3_CPU {
 
     // trace
     FILE *trace_file;
+    gzFile trace_pt_file;
     char trace_string[1024];
     char gunzip_command[1024];
 
@@ -168,6 +170,7 @@ class O3_CPU {
     }
 
     // functions
+    bool read_next_line_pt(pt_instr &inst);
     void read_from_trace(),
          fetch_instruction(),
          decode_and_dispatch(),
