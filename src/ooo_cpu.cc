@@ -1,5 +1,7 @@
 #include "ooo_cpu.h"
 #include "set.h"
+#include "trace_reader.h"
+#include "trace_reader_pt.h"
 
 #define GZ_BUFFER_SIZE 80
 
@@ -12,26 +14,26 @@ void O3_CPU::initialize_core() {
 
 }
 
-bool O3_CPU::read_next_line_pt(pt_instr &inst) {
-    if (trace_pt_file == NULL) return false;
-    char buffer[GZ_BUFFER_SIZE];
-    if (gzgets(trace_pt_file, buffer, GZ_BUFFER_SIZE) == Z_NULL)
-        return false;
-    vector<uint64_t> curr;
-    char *end;
-    for (auto i = strtoul(buffer, &end, 16); buffer != end; i = strtoul(buffer, &end, 16)) {
-        curr.push_back(i);
-    }
-    if (curr.size() < 3 || curr.size() != curr[1] + 2) {
-        return false;
-    }
-    inst.pc = curr[0];
-    inst.size = curr[1];
-    for (size_t i = 2; i < curr.size(); i++) {
-        inst.inst_bytes[i] = curr[i];
-    }
-    return true;
-}
+//bool O3_CPU::read_next_line_pt(pt_instr &inst) {
+//    if (trace_pt_file == NULL) return false;
+//    char buffer[GZ_BUFFER_SIZE];
+//    if (gzgets(trace_pt_file, buffer, GZ_BUFFER_SIZE) == Z_NULL)
+//        return false;
+//    vector<uint64_t> curr;
+//    char *end;
+//    for (auto i = strtoul(buffer, &end, 16); buffer != end; i = strtoul(buffer, &end, 16)) {
+//        curr.push_back(i);
+//    }
+//    if (curr.size() < 3 || curr.size() != curr[1] + 2) {
+//        return false;
+//    }
+//    inst.pc = curr[0];
+//    inst.size = curr[1];
+//    for (size_t i = 2; i < curr.size(); i++) {
+//        inst.inst_bytes[i] = curr[i];
+//    }
+//    return true;
+//}
 
 void O3_CPU::read_from_trace() {
     // actual processors do not work like this but for easier implementation,
@@ -158,13 +160,21 @@ void O3_CPU::read_from_trace() {
                 }
                 instr_unique_id++;
             }
-        } else if (pt) {
-            pt_instr trace_read_pt;
-            read_next_line_pt(trace_read_pt);
-
         } else {
             input_instr trace_read_instr;
-            if (!fread(&trace_read_instr, instr_size, 1, trace_file)) {
+            bool read_success = true;
+            if (pt) {
+                auto pt_instr = trace_reader_pt->getNextInstruction();
+                if (!pt_instr->ins) {
+                    read_success = false;
+                    trace_reader_pt.reset(nullptr);
+                    trace_reader_pt = make_unique<TraceReaderPT>((string(trace_string)));
+                } else {
+                    trace_read_instr.ip = pt_instr->pc;
+                    trace_read_instr.branch_taken = pt_instr->taken;
+                }
+            } else if (!fread(&trace_read_instr, instr_size, 1, trace_file)) {
+                read_success = false;
                 // reached end of file for this trace
                 cout << "*** Reached end of trace for Core: " << cpu << " Repeating trace: " << trace_string << endl;
 
@@ -175,7 +185,8 @@ void O3_CPU::read_from_trace() {
                     cerr << endl << "*** CANNOT REOPEN TRACE FILE: " << trace_string << " ***" << endl;
                     assert(0);
                 }
-            } else { // successfully read the trace
+            }
+            if (read_success) { // successfully read the trace
 
                 if (instr_unique_id == 0) {
                     current_instr = next_instr = trace_read_instr;
@@ -386,6 +397,8 @@ void O3_CPU::read_from_trace() {
                 instr_unique_id++;
             }
         }
+
+
     }
 
     //instrs_to_fetch_this_cycle = num_reads;
