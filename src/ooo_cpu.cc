@@ -172,6 +172,7 @@ void O3_CPU::read_from_trace() {
                 } else {
                     trace_read_instr.ip = pt_instr->pc;
                     trace_read_instr.branch_taken = pt_instr->taken;
+                    trace_read_instr.is_branch = (xed_decoded_inst_get_category(pt_instr->ins) == XED_CATEGORY_COND_BR);
                 }
             } else if (!fread(&trace_read_instr, instr_size, 1, trace_file)) {
                 read_success = false;

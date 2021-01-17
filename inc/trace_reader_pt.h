@@ -46,7 +46,7 @@ struct PTInst
 {
     uint64_t pc;
     uint8_t size;
-    uint8_t inst_bytes[16];
+    uint8_t inst_bytes[16] = {0};
 };
 
 class TraceReaderPT : public TraceReader
@@ -61,7 +61,9 @@ public:
     {
         if(raw_file==NULL)return false;
         char buffer[GZ_BUFFER_SIZE];
+        auto x = buffer;
         if(gzgets(raw_file,buffer,GZ_BUFFER_SIZE) == Z_NULL)return false;
+        cout << buffer << endl;
 //        std::string line = buffer;
 //        boost::trim_if(line, boost::is_any_of("\n"));
 //        std::vector<std::string> parsed;
@@ -75,7 +77,8 @@ public:
 //        }
         std::vector<uint64_t> curr;
         char *end;
-        for (auto i = strtoul(buffer, &end, 16); buffer != end; i = strtoul(buffer, &end, 16)) {
+        for (auto i = strtoul(x, &end, 16); x != end; i = strtoul(x, &end, 16)) {
+            x = end;
             curr.push_back(i);
         }
         if (curr.size() < 3 || curr.size() != curr[1] + 2) {
@@ -84,7 +87,7 @@ public:
         inst.pc = curr[0];
         inst.size = curr[1];
         for (size_t i = 2; i < curr.size(); i++) {
-            inst.inst_bytes[i] = curr[i];
+            inst.inst_bytes[i - 2] = curr[i];
         }
         if(enable_code_bloat_effect && (prev_to_new_bbl_address_map != nullptr))
         {
