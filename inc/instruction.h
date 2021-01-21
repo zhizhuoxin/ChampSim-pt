@@ -190,8 +190,8 @@ public:
 
     // memory addresses that may cause dependencies between instructions
     uint64_t instruction_pa, data_pa, virtual_address, physical_address;
-    uint64_t destination_memory[NUM_INSTR_DESTINATIONS_SPARC]; // output memory
-    uint64_t source_memory[NUM_INSTR_SOURCES]; // input memory
+    uint64_t destination_memory[NUM_INSTR_DESTINATIONS_SPARC] = {0}; // output memory
+    uint64_t source_memory[NUM_INSTR_SOURCES] = {0}; // input memory
     //int source_memory_outstanding[NUM_INSTR_SOURCES];  // a value of 2 here means the load hasn't been issued yet, 1 means it has been issued, but not returned yet, and 0 means it has returned
 
     // keep around a record of what the original virtual addresses were
