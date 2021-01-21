@@ -199,6 +199,7 @@ void O3_CPU::read_from_trace() {
                 xed_error_enum_t xed_error = xed_decode(&arch_instr.inst_pt, current_pt_instr.inst_bytes.data(), current_pt_instr.size);
                 if (xed_error != XED_ERROR_NONE) {
                     printf("%d %s\n",(int)current_pt_instr.size, xed_error_enum_t2str(xed_error));
+                    assert(0);
                 }
                 arch_instr.is_branch = xed_decoded_inst_get_category(&arch_instr.inst_pt) == XED_CATEGORY_COND_BR;
 
@@ -265,8 +266,8 @@ void O3_CPU::read_from_trace() {
                         assert(reg);  // can't be invalid
                         reg = xed_get_largest_enclosing_register(reg);  // eax -> rax, etc; o/w we'd miss a bunch of deps!
 
-                        assert(numInRegs < 2);
-                        assert(numOutRegs < 2);
+//                        assert(numInRegs < 2);
+//                        assert(numOutRegs < 2);
                         if (read) {
                             arch_instr.source_registers[numInRegs++] = reg;
                             switch (reg) {
