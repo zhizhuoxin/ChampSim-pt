@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
     xed_error = xed_decode(&xedd,
                            XED_STATIC_CAST(const xed_uint8_t*,itext),
                            3);
-    printf("%d %s\n",(int)bytes, xed_error_enum_t2str(xed_error));
+    printf("%d %s\n",3, xed_error_enum_t2str(xed_error));
 //    for(bytes = 0;bytes<=15;bytes++) {
 //        xed_error_enum_t xed_error;
 //        xed_decoded_inst_t xedd;
