@@ -42,10 +42,14 @@ public:
     char trace_string[1024];
     char gunzip_command[1024];
 
+    // TODO: Delete trace_reader_pt
     // Read trace pt
-    std::unique_ptr<TraceReaderPT> trace_reader_pt;
+    gzFile trace_file_pt;
+    string trace_string_pt;
 
     // instruction
+    pt_instr next_pt_instr;
+    pt_instr current_pt_instr;
     input_instr next_instr;
     input_instr current_instr;
     cloudsuite_instr current_cloudsuite_instr;
@@ -173,6 +177,11 @@ public:
         RTS1_head = 0;
         RTS0_tail = 0;
         RTS1_tail = 0;
+    }
+
+    // Destructor
+    ~O3_CPU() {
+        if (trace_file_pt != NULL) gzclose(trace_file_pt);
     }
 
     // functions

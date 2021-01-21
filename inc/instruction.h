@@ -26,14 +26,42 @@
 #define BRANCH_OTHER         7
 
 #include "set.h"
+#include <vector>
+
+extern "C" {
+#include "public/xed/xed-interface.h"
+}
+
+
+using namespace std;
 
 class pt_instr {
 public:
     uint64_t pc = 0;
     uint8_t size = 0;
-    uint8_t inst_bytes[16] = {0};
+    vector<uint8_t> inst_bytes;
 
     pt_instr() = default;
+
+    explicit pt_instr(char *buffer) {
+        inst_bytes.resize(16, 0);
+        auto x = buffer;
+        std::vector<uint64_t> curr;
+        char *end;
+        for (auto i = strtoul(x, &end, 16); x != end; i = strtoul(x, &end, 16)) {
+            x = end;
+            curr.push_back(i);
+        }
+        if (curr.size() < 3 || curr.size() != curr[1] + 2) {
+            size = 0;
+            return;
+        }
+        pc = curr[0];
+        size = curr[1];
+        for (size_t i = 2; i < curr.size(); i++) {
+            inst_bytes[i - 2] = curr[i];
+        }
+    }
 };
 
 class input_instr {
@@ -109,6 +137,9 @@ public:
 
 class ooo_model_instr {
 public:
+//    std::unique_ptr<xed_decoded_inst_t> inst_pt;
+    xed_decoded_inst_t inst_pt;
+
     uint64_t instr_id,
             ip,
             fetch_producer,
@@ -145,9 +176,9 @@ public:
     // executed bit is set after all dependencies are eliminated and this instr is chosen on a cycle, according to EXEC_WIDTH
     int executed;
 
-    uint8_t destination_registers[NUM_INSTR_DESTINATIONS_SPARC]; // output registers
+    uint32_t destination_registers[NUM_INSTR_DESTINATIONS_SPARC]; // output registers
 
-    uint8_t source_registers[NUM_INSTR_SOURCES]; // input registers 
+    uint32_t source_registers[NUM_INSTR_SOURCES]; // input registers
 
     // these are instruction ids of other instructions in the window
     //int64_t registers_instrs_i_depend_on[NUM_INSTR_SOURCES];

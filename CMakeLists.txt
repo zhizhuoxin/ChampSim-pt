@@ -37,6 +37,12 @@ add_executable(ChampSim_pt
         src/trace_reader.cc
         src/uncore.cc)
 
+add_executable(test_input_file
+        xed_example/main.cpp)
+
 target_link_libraries(ChampSim_pt
         xed
         z)
+
+target_link_libraries(test_input_file
+        xed)

@@ -5,6 +5,8 @@
 #include "uncore.h"
 #include <fstream>
 
+static bool xedInitDone = false;
+
 uint8_t warmup_complete[NUM_CPUS],
         simulation_complete[NUM_CPUS],
         all_warmup_complete = 0,
@@ -699,7 +701,13 @@ int main(int argc, char **argv) {
                     assert(0);
                 }
             } else {
-                ooo_cpu[count_traces].trace_reader_pt = make_unique<TraceReaderPT>(full_name);
+//                ooo_cpu[count_traces].trace_reader_pt = make_unique<TraceReaderPT>(full_name);
+                ooo_cpu[count_traces].trace_file_pt = gzopen(full_name.c_str(), "rb");
+                ooo_cpu[count_traces].trace_string_pt = full_name;
+                if (!xedInitDone) {
+                    xed_tables_init();
+                    xedInitDone = true;
+                }
             }
 
             count_traces++;

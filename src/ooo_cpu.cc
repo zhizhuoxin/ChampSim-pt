@@ -3,6 +3,11 @@
 #include "trace_reader.h"
 #include "trace_reader_pt.h"
 
+extern "C" {
+#include "public/xed/xed-interface.h"
+}
+
+
 #define GZ_BUFFER_SIZE 80
 
 // out-of-order core
@@ -160,21 +165,276 @@ void O3_CPU::read_from_trace() {
                 }
                 instr_unique_id++;
             }
+        } else if (pt) {
+            char buffer[GZ_BUFFER_SIZE];
+            if(gzgets(trace_file_pt, buffer, GZ_BUFFER_SIZE) == Z_NULL) {
+                cout << "*** Reached end of trace for Core: " << cpu << " Repeating trace: " << trace_string << endl;
+                // close the trace pt file and re-open it
+                gzclose(trace_file_pt);
+                trace_file_pt = gzopen(trace_string_pt.c_str(), "rb");
+                if (trace_file_pt == NULL) {
+                    cerr << endl << "*** CANNOT REOPEN TRACE FILE: " << trace_string << " ***" << endl;
+                    assert(0);
+                }
+            } else {
+                pt_instr trace_read_instr_pt(buffer);
+                if (trace_read_instr_pt.size == 0) {
+                    continue;
+                }
+                if (instr_unique_id == 0) {
+                    next_pt_instr = trace_read_instr_pt;
+                    instr_unique_id++;
+                    continue;
+                } else {
+                    current_pt_instr = next_pt_instr;
+                    next_pt_instr = trace_read_instr_pt;
+                }
+                ooo_model_instr arch_instr;
+                int num_reg_ops = 0, num_mem_ops = 0;
+                arch_instr.instr_id = instr_unique_id;
+                arch_instr.ip = current_pt_instr.pc;
+                arch_instr.branch_taken = current_pt_instr.pc + current_pt_instr.size != next_pt_instr.pc;
+                xed_decoded_inst_zero(&arch_instr.inst_pt);
+                xed_decoded_inst_set_mode(&arch_instr.inst_pt, XED_MACHINE_MODE_LONG_64, XED_ADDRESS_WIDTH_64b);
+                xed_error_enum_t xed_error = xed_decode(&arch_instr.inst_pt, current_pt_instr.inst_bytes.data(), current_pt_instr.size);
+                if (xed_error != XED_ERROR_NONE) {
+                    printf("%d %s\n",(int)current_pt_instr.size, xed_error_enum_t2str(xed_error));
+                }
+                arch_instr.is_branch = xed_decoded_inst_get_category(&arch_instr.inst_pt) == XED_CATEGORY_COND_BR;
+
+                arch_instr.asid[0] = cpu;
+                arch_instr.asid[1] = cpu;
+
+                // Find registers. Reference: zsim trace_decoder.cpp
+                uint32_t numOperands = xed_decoded_inst_noperands(&arch_instr.inst_pt);
+                auto opcode = (xed_iclass_enum_t) xed_decoded_inst_get_iclass(&arch_instr.inst_pt);
+                uint32_t numInRegs = 0, numOutRegs = 0;
+                uint32_t numLoads = 0, numStores = 0;
+                bool reads_sp = false;
+                bool writes_sp = false;
+                bool reads_flags = false;
+                bool reads_ip = false;
+                bool writes_ip = false;
+                bool reads_other = false;
+                for (uint32_t op = 0; op < numOperands; op++) {
+                    bool read = false, write = false;
+                    const xed_inst_t* inst = arch_instr.inst_pt._inst;
+                    const xed_operand_t* o = xed_inst_operand(inst, op);
+
+                    switch(xed_decoded_inst_operand_action(&arch_instr.inst_pt ,op))
+                    {
+                        case XED_OPERAND_ACTION_RW:
+                            read = true;
+                            write = true;
+                            break;
+                        case XED_OPERAND_ACTION_R:
+                            read = true;
+                            break;
+                        case XED_OPERAND_ACTION_W:
+                            write = true;
+                            break;
+                        case XED_OPERAND_ACTION_CR:
+                            read = true;
+                            break;
+                        case XED_OPERAND_ACTION_RCW:
+                            read = true;
+                            write = true;
+                            break;
+                        case XED_OPERAND_ACTION_CRW:
+                            read = true;
+                            write = true;
+                            break;
+                        case XED_OPERAND_ACTION_CW:
+                            write = true;
+                            break;
+                        default:
+                            assert(0);
+                    }
+                    assert(read || write);
+
+                    if (xed_operand_is_register(xed_operand_name(o))) {
+                        /* Handle XED-PIN mismatch
+                        * PIN provides only one output register for near call instrumentations
+                        * and zsim can only handle one. XED lists two (which might be correct)
+                        * but it won't affect accuracy much. */
+//                        if ((opcode == XO(CALL_NEAR)) && numOutRegs > 0)
+//                            continue;
+//                        TODO: Justify that the change is correct
+//                        auto reg = xed_decoded_inst_get_reg(arch_instr.inst_pt.get(), (xed_operand_enum_t)op);
+                        auto reg = xed_decoded_inst_get_reg(&arch_instr.inst_pt, xed_operand_name(o));
+                        assert(reg);  // can't be invalid
+                        reg = xed_get_largest_enclosing_register(reg);  // eax -> rax, etc; o/w we'd miss a bunch of deps!
+
+                        assert(numInRegs < 2);
+                        assert(numOutRegs < 2);
+                        if (read) {
+                            arch_instr.source_registers[numInRegs++] = reg;
+                            switch (reg) {
+                                case 0:
+                                    break;
+                                case XED_REG_SP:
+                                    reads_sp = true;
+                                    break;
+                                case XED_REG_FLAGS:
+                                    reads_flags = true;
+                                    break;
+                                case XED_REG_IP:
+                                    reads_ip = true;
+                                default:
+                                    reads_other = true;
+                                    break;
+                            }
+                        }
+                        if (write) {
+                            arch_instr.destination_registers[numOutRegs++] = reg;
+                            switch (reg) {
+                                case XED_REG_SP:
+                                    writes_sp = true;
+                                    break;
+                                case XED_REG_IP:
+                                    writes_ip = true;
+                                    break;
+                                default:
+                                    break;
+
+                            }
+                        }
+                        // TODO: does numInRegs + numOutRegs == num_reg_ops?
+                        num_reg_ops++;
+                    }
+                    else if (xed_operand_name(o) == XED_OPERAND_MEM0) {
+//                        if (write) storeOps[numStores++] = 0;
+//                        if (read) loadOps[numLoads++] = 0;
+                        if (write) numStores++;
+                        if (read) numLoads++;
+                        // TODO: does numStores + numLoads == num_mem_ops?
+                        num_mem_ops++;
+                    }
+                    else if (xed_operand_name(o) == XED_OPERAND_MEM1) {
+//                        if (write) storeOps[numStores++] = 1;
+//                        if (read) loadOps[numLoads++] = 1;
+                        if (write) numStores++;
+                        if (read) numLoads++;
+                        // TODO: does numStores + numLoads == num_mem_ops?
+                        num_mem_ops++;
+                    }
+                }
+                arch_instr.num_reg_ops = num_reg_ops;
+                arch_instr.num_mem_ops = num_mem_ops;
+                if (num_mem_ops > 0)
+                    arch_instr.is_memory = 1;
+
+                // determine what kind of branch this is, if any
+                if (!reads_sp && !reads_flags && writes_ip && !reads_other) {
+                    // direct jump
+                    arch_instr.is_branch = 1;
+                    arch_instr.branch_taken = 1;
+                    arch_instr.branch_type = BRANCH_DIRECT_JUMP;
+                } else if (!reads_sp && !reads_flags && writes_ip && reads_other) {
+                    // indirect branch
+                    arch_instr.is_branch = 1;
+                    arch_instr.branch_taken = 1;
+                    arch_instr.branch_type = BRANCH_INDIRECT;
+                } else if (!reads_sp && reads_ip && !writes_sp && writes_ip && reads_flags && !reads_other) {
+                    // conditional branch
+                    arch_instr.is_branch = 1;
+                    arch_instr.branch_taken = arch_instr.branch_taken; // don't change this
+                    arch_instr.branch_type = BRANCH_CONDITIONAL;
+                } else if (reads_sp && reads_ip && writes_sp && writes_ip && !reads_flags && !reads_other) {
+                    // direct call
+                    arch_instr.is_branch = 1;
+                    arch_instr.branch_taken = 1;
+                    arch_instr.branch_type = BRANCH_DIRECT_CALL;
+                } else if (reads_sp && reads_ip && writes_sp && writes_ip && !reads_flags && reads_other) {
+                    // indirect call
+                    arch_instr.is_branch = 1;
+                    arch_instr.branch_taken = 1;
+                    arch_instr.branch_type = BRANCH_INDIRECT_CALL;
+                } else if (reads_sp && !reads_ip && writes_sp && writes_ip) {
+                    // return
+                    arch_instr.is_branch = 1;
+                    arch_instr.branch_taken = 1;
+                    arch_instr.branch_type = BRANCH_RETURN;
+                } else if (writes_ip) {
+                    // some other branch type that doesn't fit the above categories
+                    arch_instr.is_branch = 1;
+                    arch_instr.branch_taken = arch_instr.branch_taken; // don't change this
+                    arch_instr.branch_type = BRANCH_OTHER;
+                }
+
+                total_branch_types[arch_instr.branch_type]++;
+
+                if ((arch_instr.is_branch == 1) && (arch_instr.branch_taken == 1)) {
+                    arch_instr.branch_target = next_instr.ip;
+                }
+
+                // add this instruction to the IFETCH_BUFFER
+                if (IFETCH_BUFFER.occupancy < IFETCH_BUFFER.SIZE) {
+                    uint32_t ifetch_buffer_index = add_to_ifetch_buffer(&arch_instr);
+                    num_reads++;
+
+                    // handle branch prediction
+                    if (IFETCH_BUFFER.entry[ifetch_buffer_index].is_branch) {
+
+                        DP(if (warmup_complete[cpu]) {
+                            cout << "[BRANCH] instr_id: " << instr_unique_id << " ip: " << hex << arch_instr.ip << dec
+                                 << " taken: " << +arch_instr.branch_taken << endl;
+                        });
+
+                        num_branch++;
+
+                        // handle branch prediction & branch predictor update
+                        uint8_t branch_prediction = predict_branch(IFETCH_BUFFER.entry[ifetch_buffer_index].ip);
+                        uint64_t predicted_branch_target = IFETCH_BUFFER.entry[ifetch_buffer_index].branch_target;
+                        if (branch_prediction == 0) {
+                            predicted_branch_target = 0;
+                        }
+                        // call code prefetcher every time the branch predictor is used
+                        l1i_prefetcher_branch_operate(IFETCH_BUFFER.entry[ifetch_buffer_index].ip,
+                                                      IFETCH_BUFFER.entry[ifetch_buffer_index].branch_type,
+                                                      predicted_branch_target);
+
+                        if (IFETCH_BUFFER.entry[ifetch_buffer_index].branch_taken != branch_prediction) {
+                            branch_mispredictions++;
+                            total_rob_occupancy_at_branch_mispredict += ROB.occupancy;
+                            if (warmup_complete[cpu]) {
+                                fetch_stall = 1;
+                                instrs_to_read_this_cycle = 0;
+                                IFETCH_BUFFER.entry[ifetch_buffer_index].branch_mispredicted = 1;
+                            }
+                        } else {
+                            // correct prediction
+                            if (branch_prediction == 1) {
+                                // if correctly predicted taken, then we can't fetch anymore instructions this cycle
+                                instrs_to_read_this_cycle = 0;
+                            }
+                        }
+
+                        last_branch_result(IFETCH_BUFFER.entry[ifetch_buffer_index].ip,
+                                           IFETCH_BUFFER.entry[ifetch_buffer_index].branch_taken);
+                    }
+
+                    if ((num_reads >= instrs_to_read_this_cycle) || (IFETCH_BUFFER.occupancy == IFETCH_BUFFER.SIZE))
+                        continue_reading = 0;
+                }
+                instr_unique_id++;
+            }
         } else {
             input_instr trace_read_instr;
             bool read_success = true;
-            if (pt) {
-                auto pt_instr = trace_reader_pt->getNextInstruction();
-                if (!pt_instr->ins) {
-                    read_success = false;
-                    trace_reader_pt.reset(nullptr);
-                    trace_reader_pt = make_unique<TraceReaderPT>((string(trace_string)));
-                } else {
-                    trace_read_instr.ip = pt_instr->pc;
-                    trace_read_instr.branch_taken = pt_instr->taken;
-                    trace_read_instr.is_branch = (xed_decoded_inst_get_category(pt_instr->ins) == XED_CATEGORY_COND_BR);
-                }
-            } else if (!fread(&trace_read_instr, instr_size, 1, trace_file)) {
+//            if (pt) {
+//                auto pt_instr = trace_reader_pt->getNextInstruction();
+//                if (!pt_instr->ins) {
+//                    read_success = false;
+//                    trace_reader_pt.reset(nullptr);
+//                    trace_reader_pt = make_unique<TraceReaderPT>((string(trace_string)));
+//                } else {
+//                    trace_read_instr.ip = pt_instr->pc;
+//                    trace_read_instr.branch_taken = pt_instr->taken;
+//                    trace_read_instr.is_branch = (xed_decoded_inst_get_category(pt_instr->ins) == XED_CATEGORY_COND_BR);
+//                }
+//            }
+            if (!fread(&trace_read_instr, instr_size, 1, trace_file)) {
                 read_success = false;
                 // reached end of file for this trace
                 cout << "*** Reached end of trace for Core: " << cpu << " Repeating trace: " << trace_string << endl;
