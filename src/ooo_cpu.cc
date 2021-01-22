@@ -198,10 +198,11 @@ void O3_CPU::read_from_trace() {
                 xed_decoded_inst_set_mode(&arch_instr.inst_pt, XED_MACHINE_MODE_LONG_64, XED_ADDRESS_WIDTH_64b);
                 xed_error_enum_t xed_error = xed_decode(&arch_instr.inst_pt, current_pt_instr.inst_bytes.data(), current_pt_instr.size);
                 if (xed_error != XED_ERROR_NONE) {
-                    printf("%d %s\n",(int)current_pt_instr.size, xed_error_enum_t2str(xed_error));
-                    assert(0);
+//                    printf("%d %s\n",(int)current_pt_instr.size, xed_error_enum_t2str(xed_error));
+                    continue;
+//                    assert(0);
                 }
-                arch_instr.is_branch = xed_decoded_inst_get_category(&arch_instr.inst_pt) == XED_CATEGORY_COND_BR;
+//                arch_instr.is_branch = xed_decoded_inst_get_category(&arch_instr.inst_pt) == XED_CATEGORY_COND_BR;
 
                 arch_instr.asid[0] = cpu;
                 arch_instr.asid[1] = cpu;
@@ -211,12 +212,6 @@ void O3_CPU::read_from_trace() {
                 auto opcode = (xed_iclass_enum_t) xed_decoded_inst_get_iclass(&arch_instr.inst_pt);
                 uint32_t numInRegs = 0, numOutRegs = 0;
                 uint32_t numLoads = 0, numStores = 0;
-                bool reads_sp = false;
-                bool writes_sp = false;
-                bool reads_flags = false;
-                bool reads_ip = false;
-                bool writes_ip = false;
-                bool reads_other = false;
                 for (uint32_t op = 0; op < numOperands; op++) {
                     bool read = false, write = false;
                     const xed_inst_t* inst = arch_instr.inst_pt._inst;
@@ -258,11 +253,11 @@ void O3_CPU::read_from_trace() {
                         * PIN provides only one output register for near call instrumentations
                         * and zsim can only handle one. XED lists two (which might be correct)
                         * but it won't affect accuracy much. */
-//                        if ((opcode == XO(CALL_NEAR)) && numOutRegs > 0)
-//                            continue;
+                        if ((opcode == XED_ICLASS_CALL_NEAR) && numOutRegs > 0)
+                            continue;
 //                        TODO: Justify that the change is correct
 //                        auto reg = xed_decoded_inst_get_reg(arch_instr.inst_pt.get(), (xed_operand_enum_t)op);
-                        auto reg = xed_decoded_inst_get_reg(&arch_instr.inst_pt, xed_operand_name(o));
+                        auto reg = xed_decoded_inst_get_reg(&arch_instr.inst_pt, xed_operand_name(xed_inst_operand(xed_decoded_inst_inst(&arch_instr.inst_pt), op)));
                         assert(reg);  // can't be invalid
                         reg = xed_get_largest_enclosing_register(reg);  // eax -> rax, etc; o/w we'd miss a bunch of deps!
 
@@ -270,97 +265,61 @@ void O3_CPU::read_from_trace() {
 //                        assert(numOutRegs < 2);
                         if (read) {
                             arch_instr.source_registers[numInRegs++] = reg;
-                            switch (reg) {
-                                case 0:
-                                    break;
-                                case XED_REG_SP:
-                                    reads_sp = true;
-                                    break;
-                                case XED_REG_FLAGS:
-                                    reads_flags = true;
-                                    break;
-                                case XED_REG_IP:
-                                    reads_ip = true;
-                                default:
-                                    reads_other = true;
-                                    break;
-                            }
                         }
                         if (write) {
                             arch_instr.destination_registers[numOutRegs++] = reg;
-                            switch (reg) {
-                                case XED_REG_SP:
-                                    writes_sp = true;
-                                    break;
-                                case XED_REG_IP:
-                                    writes_ip = true;
-                                    break;
-                                default:
-                                    break;
-
-                            }
                         }
-                        // TODO: does numInRegs + numOutRegs == num_reg_ops?
-                        num_reg_ops++;
+//                        TODO: does numInRegs + numOutRegs == num_reg_ops?
+//                        num_reg_ops++;
                     }
                     else if (xed_operand_name(o) == XED_OPERAND_MEM0) {
 //                        if (write) storeOps[numStores++] = 0;
 //                        if (read) loadOps[numLoads++] = 0;
                         if (write) numStores++;
                         if (read) numLoads++;
-                        // TODO: does numStores + numLoads == num_mem_ops?
-                        num_mem_ops++;
+//                        TODO: does numStores + numLoads == num_mem_ops?
+//                        num_mem_ops++;
                     }
                     else if (xed_operand_name(o) == XED_OPERAND_MEM1) {
 //                        if (write) storeOps[numStores++] = 1;
 //                        if (read) loadOps[numLoads++] = 1;
                         if (write) numStores++;
                         if (read) numLoads++;
-                        // TODO: does numStores + numLoads == num_mem_ops?
-                        num_mem_ops++;
+//                        TODO: does numStores + numLoads == num_mem_ops?
+//                        num_mem_ops++;
                     }
                 }
-                arch_instr.num_reg_ops = num_reg_ops;
-                arch_instr.num_mem_ops = num_mem_ops;
+                arch_instr.num_reg_ops = (int)(numInRegs + numOutRegs);
+                arch_instr.num_mem_ops = (int)(numStores + numLoads);
                 if (num_mem_ops > 0)
                     arch_instr.is_memory = 1;
 
                 // determine what kind of branch this is, if any
-                if (!reads_sp && !reads_flags && writes_ip && !reads_other) {
-                    // direct jump
-                    arch_instr.is_branch = 1;
-                    arch_instr.branch_taken = 1;
-                    arch_instr.branch_type = BRANCH_DIRECT_JUMP;
-                } else if (!reads_sp && !reads_flags && writes_ip && reads_other) {
-                    // indirect branch
-                    arch_instr.is_branch = 1;
-                    arch_instr.branch_taken = 1;
-                    arch_instr.branch_type = BRANCH_INDIRECT;
-                } else if (!reads_sp && reads_ip && !writes_sp && writes_ip && reads_flags && !reads_other) {
-                    // conditional branch
-                    arch_instr.is_branch = 1;
-                    arch_instr.branch_taken = arch_instr.branch_taken; // don't change this
-                    arch_instr.branch_type = BRANCH_CONDITIONAL;
-                } else if (reads_sp && reads_ip && writes_sp && writes_ip && !reads_flags && !reads_other) {
-                    // direct call
-                    arch_instr.is_branch = 1;
-                    arch_instr.branch_taken = 1;
-                    arch_instr.branch_type = BRANCH_DIRECT_CALL;
-                } else if (reads_sp && reads_ip && writes_sp && writes_ip && !reads_flags && reads_other) {
-                    // indirect call
-                    arch_instr.is_branch = 1;
-                    arch_instr.branch_taken = 1;
-                    arch_instr.branch_type = BRANCH_INDIRECT_CALL;
-                } else if (reads_sp && !reads_ip && writes_sp && writes_ip) {
-                    // return
-                    arch_instr.is_branch = 1;
-                    arch_instr.branch_taken = 1;
-                    arch_instr.branch_type = BRANCH_RETURN;
-                } else if (writes_ip) {
-                    // some other branch type that doesn't fit the above categories
-                    arch_instr.is_branch = 1;
-                    arch_instr.branch_taken = arch_instr.branch_taken; // don't change this
-                    arch_instr.branch_type = BRANCH_OTHER;
+                arch_instr.is_branch = 1;
+                auto category = xed_decoded_inst_get_category(&arch_instr.inst_pt);
+                switch (category) {
+                    case XED_CATEGORY_COND_BR:
+                        arch_instr.branch_type = BRANCH_CONDITIONAL;
+                        break;
+                    case XED_CATEGORY_UNCOND_BR:
+                        if (xed3_operand_get_brdisp_width(&arch_instr.inst_pt))
+                            arch_instr.branch_type = BRANCH_DIRECT_JUMP;
+                        else
+                            arch_instr.branch_type = BRANCH_INDIRECT;
+                        break;
+                    case XED_CATEGORY_CALL:
+                        if (xed3_operand_get_brdisp_width(&arch_instr.inst_pt))
+                            arch_instr.branch_type = BRANCH_DIRECT_CALL;
+                        else
+                            arch_instr.branch_type = BRANCH_INDIRECT_CALL;
+                        break;
+                    case XED_CATEGORY_RET:
+                        arch_instr.branch_type = BRANCH_RETURN;
+                        break;
+                    default:
+                        arch_instr.branch_type = NOT_BRANCH;
+                        arch_instr.is_branch = NOT_BRANCH;
+                        break;
                 }
 
                 total_branch_types[arch_instr.branch_type]++;
