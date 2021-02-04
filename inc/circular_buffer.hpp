@@ -98,6 +98,7 @@ class circular_buffer
         const_reference operator[](size_type n) const { return entry_[n % size()]; }
 
     public:
+        circular_buffer() = default;
         explicit circular_buffer(std::size_t N) : entry_(N) {}
 
         constexpr size_type size() const noexcept     { return entry_.size(); }

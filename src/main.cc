@@ -19,7 +19,8 @@ uint8_t warmup_complete[NUM_CPUS],
         all_simulation_complete = 0,
         MAX_INSTR_DESTINATIONS = NUM_INSTR_DESTINATIONS,
         knob_cloudsuite = 0,
-        knob_low_bandwidth = 0;
+        knob_low_bandwidth = 0,
+        pt = 0;
 
 uint64_t warmup_instructions     = 1000000,
          simulation_instructions = 10000000,
@@ -311,6 +312,7 @@ int main(int argc, char** argv)
             {"simulation_instructions", required_argument, 0, 'i'},
             {"hide_heartbeat", no_argument, 0, 'h'},
             {"cloudsuite", no_argument, 0, 'c'},
+            {"pt", no_argument, 0, 'p'},
             {"low_bandwidth",  no_argument, 0, 'b'},
             {"traces",  no_argument, 0, 't'},
             {0, 0, 0, 0}      
@@ -340,6 +342,8 @@ int main(int argc, char** argv)
                 knob_cloudsuite = 1;
                 MAX_INSTR_DESTINATIONS = NUM_INSTR_DESTINATIONS_SPARC;
                 break;
+            case 'p':
+                pt = 1;
             case 'b':
                 knob_low_bandwidth = 1;
                 break;
@@ -390,7 +394,7 @@ int main(int argc, char** argv)
         {
             std::cout << "CPU " << traces.size() << " runs " << argv[i] << std::endl;
 
-            traces.push_back(get_tracereader(argv[i], i, knob_cloudsuite));
+            traces.push_back(get_tracereader(argv[i], i, knob_cloudsuite, pt));
 
             char *pch[100];
             int count_str = 0;

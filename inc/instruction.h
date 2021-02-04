@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <iostream>
 #include <limits>
+#include <vector>
 
 // instruction format
 #define NUM_INSTR_DESTINATIONS_SPARC 4
@@ -28,6 +29,40 @@
 #include "set.h"
 
 #include <limits>
+
+extern "C" {
+#include "public/xed/xed-interface.h"
+}
+
+class pt_instr {
+public:
+    uint64_t pc = 0;
+    uint8_t size = 0;
+    vector<uint8_t> inst_bytes;
+
+    pt_instr() = default;
+
+    explicit pt_instr(char *buffer) {
+        inst_bytes.resize(16, 0);
+        auto x = buffer;
+        std::vector<uint64_t> curr;
+        char *end;
+        for (auto i = strtoul(x, &end, 16); x != end; i = strtoul(x, &end, 16)) {
+            x = end;
+            curr.push_back(i);
+        }
+        if (curr.size() < 3 || curr.size() != curr[1] + 2) {
+            size = 0;
+            return;
+        }
+        pc = curr[0];
+        size = curr[1];
+        for (size_t i = 2; i < curr.size(); i++) {
+            inst_bytes[i - 2] = curr[i];
+        }
+    }
+};
+
 
 struct input_instr {
     // instruction pointer or PC (Program Counter)
@@ -62,6 +97,9 @@ struct cloudsuite_instr {
 };
 
 struct ooo_model_instr {
+    xed_decoded_inst_t inst_pt;
+    uint8_t size = 0;
+
     uint64_t instr_id = 0,
              ip = 0,
              fetch_producer = 0,
