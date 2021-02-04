@@ -325,7 +325,7 @@ void O3_CPU::read_from_trace() {
                 total_branch_types[arch_instr.branch_type]++;
 
                 if ((arch_instr.is_branch == 1) && (arch_instr.branch_taken == 1)) {
-                    arch_instr.branch_target = next_instr.ip;
+                    arch_instr.branch_target = next_pt_instr.pc;
                 }
 
                 // add this instruction to the IFETCH_BUFFER

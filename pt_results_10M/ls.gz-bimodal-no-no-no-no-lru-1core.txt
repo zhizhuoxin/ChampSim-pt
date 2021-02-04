@@ -8,39 +8,39 @@ LLC sets: 2048
 LLC ways: 16
 Off-chip DRAM Size: 4096 MB Channels: 1 Width: 64-bit Data Rate: 3200 MT/s
 
-CPU 0 runs /Users/shixinsong/Desktop/UM/SURE/Assignment/ChampSim-pt/pt_traces/ls.gz
+CPU 0 runs /Users/shixinsong/Desktop/UM/SURE/Code/ChampSim-pt/pt_traces/ls.gz
 CPU 0 Bimodal branch predictor
-*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Assignment/ChampSim-pt/pt_traces/ls.gz
-*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Assignment/ChampSim-pt/pt_traces/ls.gz
+*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Code/ChampSim-pt/pt_traces/ls.gz
+*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Code/ChampSim-pt/pt_traces/ls.gz
 
-Warmup complete CPU 0 instructions: 1000003 cycles: 271760 (Simulation time: 0 hr 0 min 3 sec) 
+Warmup complete CPU 0 instructions: 1000003 cycles: 271760 (Simulation time: 0 hr 0 min 2 sec) 
 
-*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Assignment/ChampSim-pt/pt_traces/ls.gz
-*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Assignment/ChampSim-pt/pt_traces/ls.gz
-*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Assignment/ChampSim-pt/pt_traces/ls.gz
-*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Assignment/ChampSim-pt/pt_traces/ls.gz
-*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Assignment/ChampSim-pt/pt_traces/ls.gz
-*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Assignment/ChampSim-pt/pt_traces/ls.gz
-*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Assignment/ChampSim-pt/pt_traces/ls.gz
-*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Assignment/ChampSim-pt/pt_traces/ls.gz
-*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Assignment/ChampSim-pt/pt_traces/ls.gz
-*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Assignment/ChampSim-pt/pt_traces/ls.gz
-*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Assignment/ChampSim-pt/pt_traces/ls.gz
-*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Assignment/ChampSim-pt/pt_traces/ls.gz
-*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Assignment/ChampSim-pt/pt_traces/ls.gz
-*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Assignment/ChampSim-pt/pt_traces/ls.gz
-*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Assignment/ChampSim-pt/pt_traces/ls.gz
-*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Assignment/ChampSim-pt/pt_traces/ls.gz
-*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Assignment/ChampSim-pt/pt_traces/ls.gz
-*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Assignment/ChampSim-pt/pt_traces/ls.gz
-*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Assignment/ChampSim-pt/pt_traces/ls.gz
-*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Assignment/ChampSim-pt/pt_traces/ls.gz
-*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Assignment/ChampSim-pt/pt_traces/ls.gz
-*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Assignment/ChampSim-pt/pt_traces/ls.gz
+*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Code/ChampSim-pt/pt_traces/ls.gz
+*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Code/ChampSim-pt/pt_traces/ls.gz
+*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Code/ChampSim-pt/pt_traces/ls.gz
+*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Code/ChampSim-pt/pt_traces/ls.gz
+*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Code/ChampSim-pt/pt_traces/ls.gz
+*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Code/ChampSim-pt/pt_traces/ls.gz
+*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Code/ChampSim-pt/pt_traces/ls.gz
+*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Code/ChampSim-pt/pt_traces/ls.gz
+*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Code/ChampSim-pt/pt_traces/ls.gz
+*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Code/ChampSim-pt/pt_traces/ls.gz
+*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Code/ChampSim-pt/pt_traces/ls.gz
+*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Code/ChampSim-pt/pt_traces/ls.gz
+*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Code/ChampSim-pt/pt_traces/ls.gz
+*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Code/ChampSim-pt/pt_traces/ls.gz
+*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Code/ChampSim-pt/pt_traces/ls.gz
+*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Code/ChampSim-pt/pt_traces/ls.gz
+*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Code/ChampSim-pt/pt_traces/ls.gz
+*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Code/ChampSim-pt/pt_traces/ls.gz
+*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Code/ChampSim-pt/pt_traces/ls.gz
+*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Code/ChampSim-pt/pt_traces/ls.gz
+*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Code/ChampSim-pt/pt_traces/ls.gz
+*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Code/ChampSim-pt/pt_traces/ls.gz
 Heartbeat CPU 0 instructions: 10000000 cycles: 6403828 heartbeat IPC: 1.56157 cumulative IPC: 1.46769 (Simulation time: 0 hr 0 min 19 sec) 
-*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Assignment/ChampSim-pt/pt_traces/ls.gz
-*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Assignment/ChampSim-pt/pt_traces/ls.gz
-*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Assignment/ChampSim-pt/pt_traces/ls.gz
+*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Code/ChampSim-pt/pt_traces/ls.gz
+*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Code/ChampSim-pt/pt_traces/ls.gz
+*** Reached end of trace for Core: 0 Repeating trace: /Users/shixinsong/Desktop/UM/SURE/Code/ChampSim-pt/pt_traces/ls.gz
 Finished CPU 0 instructions: 10000000 cycles: 6821675 cumulative IPC: 1.46592 (Simulation time: 0 hr 0 min 21 sec) 
 
 ChampSim completed all CPUs
