@@ -138,7 +138,7 @@ class pt_tracereader : public tracereader {
     bool initialized = false;
     gzFile trace_file_pt;
 public:
-    explicit pt_tracereader(uint8_t cpu, std::string _tn) {
+    explicit pt_tracereader(uint8_t cpu, std::string _tn) : tracereader() {
         this->cpu = cpu;
         this->trace_string = _tn;
         trace_file_pt = gzopen(trace_string.c_str(), "rb");
@@ -173,13 +173,23 @@ public:
         arch_instr.ip = trace_read_instr_pt.pc;
         arch_instr.size = trace_read_instr_pt.size;
 //        arch_instr.branch_taken = current_pt_instr.pc + current_pt_instr.size != next_pt_instr.pc;
+        std::cout << arch_instr.ip << " ";
+        for (auto a : trace_read_instr_pt.inst_bytes) {
+            std::cout << (uint32_t) a << " ";
+        }
+        std::cout << std::endl;
         xed_decoded_inst_zero(&arch_instr.inst_pt);
         xed_decoded_inst_set_mode(&arch_instr.inst_pt, XED_MACHINE_MODE_LONG_64, XED_ADDRESS_WIDTH_64b);
         xed_error_enum_t xed_error = xed_decode(&arch_instr.inst_pt, trace_read_instr_pt.inst_bytes.data(), trace_read_instr_pt.size);
         if (xed_error != XED_ERROR_NONE) {
 //                    printf("%d %s\n",(int)current_pt_instr.size, xed_error_enum_t2str(xed_error));
             // TODO: Not sure how to deal with this error.
-            return arch_instr;
+            if ((last_instr.is_branch == 1) && (last_instr.branch_taken == 1)) {
+                last_instr.branch_target = arch_instr.ip;
+            }
+            auto retval = last_instr;
+            last_instr = arch_instr;
+            return retval;
 //                    assert(0);
         }
 //                arch_instr.is_branch = xed_decoded_inst_get_category(&arch_instr.inst_pt) == XED_CATEGORY_COND_BR;

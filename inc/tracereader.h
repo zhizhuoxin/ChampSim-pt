@@ -16,7 +16,7 @@ class tracereader
         tracereader(const tracereader &other) = delete;
         tracereader(uint8_t cpu, std::string _ts);
 
-    tracereader();
+    tracereader() = default;
 
     ~tracereader();
         void open(std::string trace_string);

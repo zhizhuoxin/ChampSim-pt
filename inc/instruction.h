@@ -38,7 +38,7 @@ class pt_instr {
 public:
     uint64_t pc = 0;
     uint8_t size = 0;
-    vector<uint8_t> inst_bytes;
+    std::vector<uint8_t> inst_bytes;
 
     pt_instr() = default;
 
