@@ -507,10 +507,16 @@ int main(int argc, char** argv)
 	      ooo_cpu[i].fetch_instruction();
 	      
 	      // read from trace
-	      if (!ooo_cpu[i].IFETCH_BUFFER.full() && (ooo_cpu[i].fetch_stall == 0))
-                {
-		  while(ooo_cpu[i].init_instruction(traces[i]->get()));
-                }
+	      if (!ooo_cpu[i].IFETCH_BUFFER.full() && (ooo_cpu[i].fetch_stall == 0)) {
+	          ooo_model_instr instr;
+              do {
+                  instr = traces[i]->get();
+                  if (instr.ip == 0) {
+                      instr = traces[i]->get();
+                  }
+              } while (ooo_cpu[i].init_instruction(instr));
+//	          while(ooo_cpu[i].init_instruction(traces[i]->get()));
+	      }
 
             // heartbeat information
             if (show_heartbeat && (ooo_cpu[i].num_retired >= ooo_cpu[i].next_print_instruction)) {

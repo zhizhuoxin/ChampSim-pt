@@ -14,6 +14,7 @@ extern "C" {
 #define GZ_BUFFER_SIZE 80
 
 static bool xedInitDone = false;
+//static size_t line_count = 0;
 
 tracereader::tracereader(uint8_t cpu, std::string _ts) : cpu(cpu), trace_string(_ts) {
     std::string last_dot = trace_string.substr(trace_string.find_last_of("."));
@@ -154,30 +155,39 @@ public:
 
     ooo_model_instr get() {
         char buffer[GZ_BUFFER_SIZE];
-        while (gzgets(trace_file_pt, buffer, GZ_BUFFER_SIZE) == Z_NULL) {
-            // reached end of file for this trace
-            std::cout << "*** Reached end of trace: " << trace_string << std::endl;
+        pt_instr trace_read_instr_pt;
+        do {
+            while (gzgets(trace_file_pt, buffer, GZ_BUFFER_SIZE) == Z_NULL) {
+                // reached end of file for this trace
+                std::cout << "*** Reached end of trace: " << trace_string << std::endl;
 
-            // close the trace file and re-open it
-            gzclose(trace_file_pt);
-            trace_file_pt = gzopen(trace_string.c_str(), "rb");
-
-            if (trace_file_pt == NULL) {
-                std::cerr << std::endl << "*** CANNOT REOPEN TRACE FILE: " << trace_string << " ***" << std::endl;
-                assert(0);
+                // close the trace file and re-open it
+                gzclose(trace_file_pt);
+                trace_file_pt = gzopen(trace_string.c_str(), "rb");
+//                line_count = 0;
+                if (trace_file_pt == NULL) {
+                    std::cerr << std::endl << "*** CANNOT REOPEN TRACE FILE: " << trace_string << " ***" << std::endl;
+                    assert(0);
+                }
             }
-        }
-        pt_instr trace_read_instr_pt(buffer);
+            trace_read_instr_pt = pt_instr(buffer);
+        } while (trace_read_instr_pt.pc == 0);
+//        pt_instr trace_read_instr_pt(buffer);
         ooo_model_instr arch_instr;
         int num_reg_ops = 0, num_mem_ops = 0;
         arch_instr.ip = trace_read_instr_pt.pc;
         arch_instr.size = trace_read_instr_pt.size;
 //        arch_instr.branch_taken = current_pt_instr.pc + current_pt_instr.size != next_pt_instr.pc;
-        std::cout << arch_instr.ip << " ";
-        for (auto a : trace_read_instr_pt.inst_bytes) {
-            std::cout << (uint32_t) a << " ";
-        }
-        std::cout << std::endl;
+//        if (line_count == 0 || last_instr.ip == 0 || line_count == 1166) {
+//            std::cout << "Line number: " << line_count << " ";
+//            std::cout << arch_instr.ip << " ";
+//            for (auto a : trace_read_instr_pt.inst_bytes) {
+//                std::cout << (uint32_t) a << " ";
+//            }
+//            std::cout << std::endl;
+//            std::cout << std::endl;
+//        }
+//        line_count++;
         xed_decoded_inst_zero(&arch_instr.inst_pt);
         xed_decoded_inst_set_mode(&arch_instr.inst_pt, XED_MACHINE_MODE_LONG_64, XED_ADDRESS_WIDTH_64b);
         xed_error_enum_t xed_error = xed_decode(&arch_instr.inst_pt, trace_read_instr_pt.inst_bytes.data(), trace_read_instr_pt.size);

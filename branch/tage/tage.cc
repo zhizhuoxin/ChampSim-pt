@@ -8,8 +8,8 @@
 #define TAGPRED_CTR_MAX  7
 #define TAGPRED_CTR_INIT 0
 #define BIMODALLOG   14
-#define NUMTAGTABLES 4
-#define TAGPREDLOG 12
+#define NUMTAGTABLES 8
+#define TAGPREDLOG 10
 
 #define TAKEN true
 #define NOT_TAKEN false
