@@ -9,3 +9,15 @@ obj/
 **/*.o
 **/*.d
 
+.idea
+cmake-build-debug
+
+*.bak
+
+# files copied when running config.sh
+branch/*.cc
+prefetcher/*.cc
+replacement/*.cc
+
+xed_example
+results_10M
